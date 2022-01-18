@@ -6,7 +6,7 @@ import boto3
 import jsonschema
 
 ENVIRON_AUTH_TOKEN_FUNC = 'AUTH_TOKEN_FUNC'
-TOKEN_HEADER = 'X-Formwork-Token'
+TOKEN_HEADER = 'X-Formwork-Token'.lower()
 lambda_client = boto3.client('lambda')
 
 GEN_PROFILE_JSON_SCHEMA = dict(
