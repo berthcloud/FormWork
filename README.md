@@ -1,70 +1,175 @@
-# formwork
+# FormWork
 
-This project contains source code and supporting files for a serverless application that you can deploy with the SAM CLI. It includes the following files and folders.
+This project aim to develop a Chrome extension to help user to fill their Job Form faster.
 
-- hello_efs - Code for the application's Lambda function.
-- events - Invocation events that you can use to invoke the function.
-- tests - Unit tests for the application code. 
+It is a serverless application based on AWS Cloud Services: Lambda, DynamoDB and S3. And the code is maintained and deployed by the AWS Serverless Application Model (SAM) framework.
+
+It includes the following files and folders.
+
 - template.yaml - A template that defines the application's AWS resources.
+- formwork - The application logic programs
+- tests - (Unfinished, Still Example Code) Unit tests for the application code. 
+- events - (Not used, Still Example Code) Invocation events that you can use to invoke the function.
 
-The application uses several AWS resources, including Lambda functions and an API Gateway API. These resources are defined in the `template.yaml` file in this project. You can update the template to add AWS resources through the same deployment process that updates your application code.
+## Use Case
 
-If you prefer to use an integrated development environment (IDE) to build and test your application, you can use the AWS Toolkit.  
-The AWS Toolkit is an open source plug-in for popular IDEs that uses the SAM CLI to build and deploy serverless applications on AWS. The AWS Toolkit also adds a simplified step-through debugging experience for Lambda function code. See the following links to get started.
+1. The user should sign up an account on FormWork Website first.
+2. The user can access the web page and use the created account to sign in.
+3. After signing in, the user could create the user's own work profile.
 
-* [CLion](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [GoLand](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [IntelliJ](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [WebStorm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [Rider](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [PhpStorm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [PyCharm](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [RubyMine](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [DataGrip](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
-* [VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html)
-* [Visual Studio](https://docs.aws.amazon.com/toolkit-for-visual-studio/latest/user-guide/welcome.html)
+4. The user then could download the FormWork Chrome extension, and the extension would help to autofill the form with the user's profile.
+
+But for now, I only finished the REST APIs:
+1. User Sign Up
+2. User Sign In
+3. User Profile PUT
+4. User Profile GET
+
+## System
+
+I created REST APIs by AWS Lambda. There are two modules:
+1. User: More like an account service. Including features:
+    * Sign Up
+    * Sign In and provide a token (For now, JWT token is used to implement.)
+    * Token Authentication and Authorization (Not REST API. It's a lambda function inside of API Gateway)
+2. Profile: The application logic which is related to the Job application data
+    * PUT Profile: Put work profile for the user represented by the given token
+    * GET Profile: Get work profile for the user represented by the given token
+
+## Test Backend Service
+
+Because this tool is still under developed, you can test the backend service directly. You can test the service which has been deployed to AWS or test the service locally.
+
+### Test Service deployed to AWS
+
+1. User Sign Up
+
+* Request
+
+```bash
+curl -v -X POST https://82wjelrv71.execute-api.us-east-2.amazonaws.com/Stage/user/signup -d '{"username": "testUser1", "password": "abcd@1234"}'
+```
+
+```json
+HTTP 200
+```
+
+2. User Sign In
+
+* Request
+
+```bash
+curl -v -X POST https://82wjelrv71.execute-api.us-east-2.amazonaws.com/Stage/user/signin -d '{"username": "testUser1", "password": "abcd@1234"}'
+```
+
+* Response
+
+```json
+HTTP 200
+
+{"token": "eyJ0eXAi...."}
+```
+
+3. PUT User General Profile
+
+* Prerequisite: Call `User Sign In` API to get a token
+
+* Request
+
+```bash
+curl -v -X PUT https://82wjelrv71.execute-api.us-east-2.amazonaws.com/Stage/profile/general -H 'x-formwork-token: eyJ0eXAi....' -d
+'{
+    "profile": {
+        "firstName": "Brendon",
+        "lastName": "Chou",
+        "countryISO": "US",
+        "address": {
+            "streetAddress": "test street",
+            "city": "Pittsburgh",
+            "state": "PA",
+            "postalCode": "15213"
+        }
+    }
+}'
+```
+
+* Response
+
+```json
+HTTP 200
+```
+
+4. GET User General Profile
+
+* Prerequisite: Call `User Sign In` API to get a token
+
+* Request
+
+```bash
+curl -v -X GET https://82wjelrv71.execute-api.us-east-2.amazonaws.com/Stage/profile/general -H 'x-formwork-token: eyJ0eXAi....'
+```
+
+* Response
+
+```json
+HTTP 200
+
+{
+    "profile": {
+        "firstName": "Brendon",
+        "lastName": "Chou",
+        "countryISO": "US",
+        "address": {
+            "streetAddress": "test street",
+            "city": "Pittsburgh",
+            "state": "PA",
+            "postalCode": "15213"
+        }
+    }
+}
+```
+
+### Test Service locally 
+
+1. Docker Network Setup
+
+```bash
+docker network create -d bridge local-dev
+```
+
+2. Local DynamoDB Setup
+
+```bash
+docker run -p 8000:8000 --name dynamodb
+--network local-dev --network-alias=dynamodb
+amazon/dynamodb-local            
+-jar DynamoDBLocal.jar -inMemory -sharedDb
+```
+
+3. Sam Start API
+```bash
+sam build
+sam local start-api --docker-network local-dev
+```
 
 ## Deploy the sample application
 
-The Serverless Application Model Command Line Interface (SAM CLI) is an extension of the AWS CLI that adds functionality for building and testing Lambda applications. It uses Docker to run your functions in an Amazon Linux environment that matches Lambda. It can also emulate your application's build environment and API.
-
-To use the SAM CLI, you need the following tools.
-
-* SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-* [Python 3 installed](https://www.python.org/downloads/)
-* Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
-
-To build and deploy your application for the first time, run the following in your shell:
-
 ```bash
-sam build --use-container
+sam build
 sam deploy --guided
 ```
 
-The first command will build the source of your application. The second command will package and deploy your application to AWS, with a series of prompts:
+## Future Work
 
-* **Stack Name**: The name of the stack to deploy to CloudFormation. This should be unique to your account and region, and a good starting point would be something matching your project name.
-* **AWS Region**: The AWS region you want to deploy your app to.
-* **Confirm changes before deploy**: If set to yes, any change sets will be shown to you before execution for manual review. If set to no, the AWS SAM CLI will automatically deploy application changes.
-* **Allow SAM CLI IAM role creation**: Many AWS SAM templates, including this example, create AWS IAM roles required for the AWS Lambda function(s) included to access AWS services. By default, these are scoped down to minimum required permissions. To deploy an AWS CloudFormation stack which creates or modifies IAM roles, the `CAPABILITY_IAM` value for `capabilities` must be provided. If permission isn't provided through this prompt, to deploy this example you must explicitly pass `--capabilities CAPABILITY_IAM` to the `sam deploy` command.
-* **Save arguments to samconfig.toml**: If set to yes, your choices will be saved to a configuration file inside the project, so that in the future you can just re-run `sam deploy` without parameters to deploy changes to your application.
-* **HelloEfsFunction may not have authorization defined, Is this okay?**: Guided deployments will prompt to confirm when you have a publicly accessible API Gateway endpoint. If you do not want the endpoint to be publicly accessible without authorization, you can add `ApiFunctionAuth` settings to the `Api` event. [See the documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-apifunctionauth.html) for details.
+1. The error handling logic is still simple, so more work needs to be invested to produce friendly error result code or message instead of the default Server Error.
 
-You can find your API Gateway Endpoint URL in the output values displayed after deployment.
+2. Learn and finish Unit Test and Integration Test
 
-## Fetch, tail, and filter Lambda function logs
+3. Develop client side logic (SignUp page and Chrome extension)
 
-To simplify troubleshooting, SAM CLI has a command called `sam logs`. `sam logs` lets you fetch logs generated by your deployed Lambda function from the command line. In addition to printing the logs on the terminal, this command has several nifty features to help you quickly find the bug.
+4. In the local environment, SAM cannot find the lambda resource by !ref in template.yaml. 
 
-`NOTE`: This command works for all AWS Lambda functions; not just the ones you deploy using SAM.
-
-```bash
-formwork$ sam logs -n HelloEfsFunction --stack-name formwork --tail
-```
-
-You can find more information and examples about filtering Lambda function logs in the [SAM CLI Documentation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-logging.html).
-
-## Tests
+## Tests (Unfinished)
 
 Tests are defined in the `tests` folder in this project. Use PIP to install the test dependencies and run tests.
 
@@ -76,17 +181,3 @@ formwork$ python -m pytest tests/unit -v
 # Create the env variable AWS_SAM_STACK_NAME with the name of the stack we are testing
 formwork$ AWS_SAM_STACK_NAME=<stack-name> python -m pytest tests/integration -v
 ```
-
-## Cleanup
-
-To delete the sample application that you created, use the AWS CLI. Assuming you used your project name for the stack name, you can run the following:
-
-```bash
-aws cloudformation delete-stack --stack-name formwork
-```
-
-## Resources
-
-See the [AWS SAM developer guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/what-is-sam.html) for an introduction to SAM specification, the SAM CLI, and serverless application concepts.
-
-Next, you can use AWS Serverless Application Repository to deploy ready to use Apps that go beyond hello world samples and learn how authors developed their applications: [AWS Serverless Application Repository main page](https://aws.amazon.com/serverless/serverlessrepo/)
