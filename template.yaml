@@ -1,0 +1,105 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  formwork
+
+  Sample SAM Template for formwork
+
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  UserSignUp:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: formwork/
+      Handler: user.signup_rest_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Policies:
+        - AmazonDynamoDBFullAccess
+      Events:
+        SignUp:
+          Type: Api
+          Properties:
+            Path: /user/signup
+            Method: post
+      MemorySize: 1024
+  UserSignIn:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: formwork/
+      Handler: user.signin_rest_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - SecretsManagerReadWrite
+      Events:
+        SignIn:
+          Type: Api
+          Properties:
+            Path: /user/signin
+            Method: post
+      MemorySize: 1024
+  AuthToken:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: formwork/
+      Handler: user.auth_token_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Policies:
+        - SecretsManagerReadWrite
+      MemorySize: 1024
+  PutProfile:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: formwork/
+      Handler: profile.put_general_profile_rest_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - LambdaInvokePolicy:
+            FunctionName: !Ref AuthToken
+      Environment:
+        Variables:
+          AUTH_TOKEN_FUNC: !Ref AuthToken
+      Events:
+        SignUp:
+          Type: Api
+          Properties:
+            Path: /profile/general
+            Method: put
+  GetProfile:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: formwork/
+      Handler: profile.get_general_profile_rest_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Policies:
+        - AmazonDynamoDBFullAccess
+        - LambdaInvokePolicy:
+            FunctionName: !Ref AuthToken
+      Environment:
+        Variables:
+          AUTH_TOKEN_FUNC: !Ref AuthToken
+      Events:
+        SignUp:
+          Type: Api
+          Properties:
+            Path: /profile/general
+            Method: get
+
+Outputs:
+  FormWorkApi:
+    Description: "API Gateway endpoint URL for Prod stage for FormWork function"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"

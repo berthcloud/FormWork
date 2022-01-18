@@ -1,0 +1,10 @@
+attrs==21.4.0
+bcrypt==3.2.0
+cffi==1.15.0
+importlib-resources==5.4.0
+jsonschema==4.4.0
+pycparser==2.21
+PyJWT==2.3.0
+pyrsistent==0.18.1
+six==1.16.0
+zipp==3.7.0
