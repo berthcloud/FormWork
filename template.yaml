@@ -10,6 +10,12 @@ Globals:
     Timeout: 3
 
 Resources:
+  BinaryAPIs:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      BinaryMediaTypes:
+        - '*~1*'
   UserSignUp:
     Type: AWS::Serverless::Function
     Properties:
@@ -97,6 +103,55 @@ Resources:
           Type: Api
           Properties:
             Path: /profile/general
+            Method: get
+  CVBucket:
+    Type: AWS::S3::Bucket
+  UploadCV:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: formwork/
+      Handler: profile.upload_cv_rest_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref AuthToken
+        - S3FullAccessPolicy:
+            BucketName: !Ref CVBucket
+      Environment:
+        Variables:
+          AUTH_TOKEN_FUNC: !Ref AuthToken
+          CV_BUCKET: !Ref CVBucket
+      Events:
+        UploadCV:
+          Type: Api
+          Properties:
+            Path: /profile/cv
+            Method: put
+            RestApiId: !Ref BinaryAPIs
+  CVPresignedUrl:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: formwork/
+      Handler: profile.get_cv_url_rest_handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      Policies:
+        - LambdaInvokePolicy:
+            FunctionName: !Ref AuthToken
+        - S3FullAccessPolicy:
+            BucketName: !Ref CVBucket
+      Environment:
+        Variables:
+          AUTH_TOKEN_FUNC: !Ref AuthToken
+          CV_BUCKET: !Ref CVBucket
+      Events:
+        GetCVPresignedUrl:
+          Type: Api
+          Properties:
+            Path: /profile/cv
             Method: get
 
 Outputs:

@@ -129,6 +129,46 @@ HTTP 200
 }
 ```
 
+5. Upload CV and Get its Presigned URL
+
+* Prerequisite: Call `User Sign In` API to get a token
+
+* Request
+
+```bash
+curl -v -X PUT https://c7urahkwz4.execute-api.us-east-2.amazonaws.com/Stage/profile/cv -H 'x-formwork-token: eyJ0eXAi....'
+```
+
+* Response
+
+```json
+HTTP 200
+
+{
+    "url": "https://obj-in-s3-bucket...."
+}
+```
+
+6. Get (Regenerate) Presigned URL of uploaded CV
+
+* Prerequisite: Call `User Sign In` API to get a token
+
+* Request
+
+```bash
+curl -v -X GET https://82wjelrv71.execute-api.us-east-2.amazonaws.com/Stage/profile/cv -H 'x-formwork-token: eyJ0eXAi....'
+```
+
+* Response
+
+```json
+HTTP 200
+
+{
+    "url": "https://obj-in-s3-bucket...."
+}
+```
+
 ### Test Service locally 
 
 1. Docker Network Setup
@@ -144,6 +184,10 @@ docker run -p 8000:8000 --name dynamodb
 --network local-dev --network-alias=dynamodb
 amazon/dynamodb-local            
 -jar DynamoDBLocal.jar -inMemory -sharedDb
+
+aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name formwork.user --key-schema AttributeName=username,KeyType=HASH --attribute-definitions AttributeName=username,AttributeType=S --provisioned-throughput=ReadCapacityUnits=1,WriteCapacityUnits=1
+
+aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name formwork.generalProfile --key-schema AttributeName=username,KeyType=HASH --attribute-definitions AttributeName=username,AttributeType=S --provisioned-throughput=ReadCapacityUnits=1,WriteCapacityUnits=1
 ```
 
 3. Sam Start API
@@ -167,7 +211,7 @@ sam deploy --guided
 
 3. Develop client side logic (SignUp page and Chrome extension)
 
-4. In the local environment, SAM cannot find the lambda resource by !ref in template.yaml. 
+4. In the local environment, SAM cannot find the lambda resource by !ref in template.yaml. I also haven't tried how to test S3 related logic in local.
 
 ## Tests (Unfinished)
 
