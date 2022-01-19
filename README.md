@@ -24,6 +24,8 @@ But for now, I only finished the REST APIs:
 2. User Sign In
 3. User Profile PUT
 4. User Profile GET
+5. Upload CV
+6. Get (Re-Generate) Presigned URL of a uploaded CV
 
 ## System
 
@@ -35,6 +37,8 @@ I created REST APIs by AWS Lambda. There are two modules:
 2. Profile: The application logic which is related to the Job application data
     * PUT Profile: Put work profile for the user represented by the given token
     * GET Profile: Get work profile for the user represented by the given token
+    * PUT CV: Upload and overwrite previous CV file. Then generate a presigned URL.
+    * GET CV: Get (Re-generate) a presigned URL of a uploaded CV
 
 ## Test Backend Service
 
